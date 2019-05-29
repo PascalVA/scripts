@@ -19,7 +19,7 @@ RECORDS=$(doctl compute domain records list $DOMAIN -o json)
 
 # Compare the current IP with the DNS record
 REGISTERED_IP=$(echo $RECORDS | jq -r --arg host "$HOST" '.[] | select(.name==$host)'.data)
-CURRENT_IP=$(public_ip.sh)
+CURRENT_IP=$(public_ip.py)
 
 if [[ ! -z $REGISTERED_IP ]]; then
     if [[ $REGISTERED_IP == $CURRENT_IP ]]; then
