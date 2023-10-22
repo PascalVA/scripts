@@ -36,10 +36,13 @@ for nr, line in enumerate(lines):
     if len(_files) <= 1:
         print('SKIPPED: no duplicates or no files found')
         continue
-    print('IDX'.ljust(4),
-          'File'.ljust(170),
-          'Size'.ljust(10),
-          'Create Date')
+    print(
+        'IDX'.ljust(4),
+        'File'.ljust(170),
+        'Size'.ljust(10),
+        'Create Date'.ljust(20)
+    )
+
     for i, f in enumerate(_files):
         # human readable index starting from 1
         hrindex = i + 1
@@ -56,7 +59,7 @@ for nr, line in enumerate(lines):
             str(hrindex).ljust(4),
             filepath.ljust(170),
             filesize.ljust(10),
-            create_date,
+            create_date.ljust(20)
         )
 
     # show images with feh so we can make sure they are not mismatched
@@ -66,27 +69,39 @@ for nr, line in enumerate(lines):
 
     # prompt the user what to do
     while True:
-        keep_index = input('\nPlease enter one of the following:\n'
-                           ' * IDX of the file you want to keep.\n'
-                           ' * "a" to delete all\n'
-                           ' * "" (empty string) to skip. \n\n'
-                           '> ')
-        try:
-            keep_index = int(keep_index)
-        except Exception:
-            pass
+        input_res = input('\nPlease enter one of the following:\n'
+                          ' * The index of the file you want to keep.\n'
+                          ' * Multiple indexes in csv (1, 4, 5, 10, ..)\n'
+                          ' * "a" to delete all\n'
+                          ' * "" (empty string) to skip. \n\n'
+                          '> ')
 
-        if keep_index in list(range(0, len(_files))) + ['a', '']:
+        invalid = False
+
+        keep_indexes = input_res.split(",")
+        for keep_index in keep_indexes:
+            try:
+                keep_index = int(keep_index)
+            except Exception:
+                pass
+
+            if keep_index not in list(range(1, len(_files)+1)) + ['a', '']:
+                invalid = True
+        if not invalid:
             break
         print('Invalid index!')
 
-    if keep_index == '':
+    if '' in keep_indexes:
         continue
 
-    if keep_index != 'a':
-        # delete all the files the user did not select
-        _files.pop(keep_index-1)
+    to_rm = []
+    if 'a' not in keep_indexes:
+        for i, f in enumerate(_files):
+            if str(i+1) not in keep_indexes:
+                to_rm.append(f)
+    else:
+        to_rm = _files
 
-    for filepath in _files:
-        subprocess.call(f'rm {filepath}', shell=True)
-        print(f'Removed file: {filepath})')
+    for f in to_rm:
+        subprocess.call(f'rm {f}', shell=True)
+        print(f'Removed file: {f})')
