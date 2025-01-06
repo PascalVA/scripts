@@ -127,11 +127,11 @@ class ImageDataDB(object):
         self.cursor.execute(f"""
             INSERT INTO image_data VALUES
             (
-                '{image_data.name}',
+                '{escape_query_string(image_data.name)}',
                 '{image_data.exifdata_checksum}',
                 '{image_data.imagedata_checksum}',
                 '{b64encode(str(image_data.exifdata).encode()).decode()}',
-                '{image_data.path}'
+                '{escape_query_string(image_data.path)}'
             )
         """)
         self.connection.commit()
@@ -143,17 +143,12 @@ class ImageDataDB(object):
 
     def select_by_path(self, path):
         res = self.cursor.execute(f"""
-            SELECT * FROM image_data WHERE path = '{abspath(path)}'
+            SELECT * FROM image_data WHERE path = '{escape_query_string(abspath(path))}'
         """)
         return res.fetchall()
 
     def path_exists(self, path):
-        try:
-            res = self.cursor.execute(f"""
-                SELECT * FROM image_data WHERE path = '{abspath(path)}'
-            """)
-        except:
-           print(path)
+        res = self.cursor.execute(f"SELECT * FROM image_data WHERE path = '{escape_query_string(abspath(path))}'")
         return (res.fetchone() != None)
 
 
@@ -208,7 +203,6 @@ def parse_args():
 
     parser_index = subparsers.add_parser("index", help="Index image files ")
     parser_index.add_argument("path", help="Path to search for images (recursively)")
-    parser_index.add_argument("path", help="Path to search for images (recursively)")
     parser_index.set_defaults(func=index)
 
     parser_count = subparsers.add_parser("count", help="Prints the number of rows found in the database")
@@ -244,6 +238,11 @@ def dump(args):
         map(lambda r: dict(zip(IMAGE_DATA_ROWS, r)), db.select_all())
     )
     print(jsondump(records))
+
+
+# TODO: needs improvement
+def escape_query_string(string):
+    return string.replace("'", "''")
 
 
 def main():
