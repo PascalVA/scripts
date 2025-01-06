@@ -13,11 +13,11 @@ from pathlib import Path
 from rich.progress import track
 from shutil import which
 from subprocess import PIPE, run
+from json import dumps as jsondump
 
 
 EXIFTOOL_CMD=which("exiftool")
-SQLITE_DB_PATH=f'{env["HOME"]}/image_checksum.sqlite'
-TEST_IMAGE_PATH="/tank/shares/media/20231031_backup/"
+IMAGE_DATA_ROWS = ["name", "exifdata_checksum", "imagedata_checksum", "exifdata_encoded", "path"]
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ class ImageData(object):
 
         # parse stdout to mapping
         _exifdata = {}
-        for line in result.stdout.decode().split("\n"):
+        for line in result.stdout.decode("cp850").split("\n"):
             if not line:
                 continue
             separator_index = line.index(":")
@@ -102,13 +102,23 @@ class ImageDataDB(object):
         self.db = abspath(sqlite_db_path)
         self.connection = sqlite3.connect(self.db)
         self.cursor = self.connection.cursor()
-        self.create_table()
+        self.initialize_database()
 
-    def create_table(self):
+    def initialize_database(self):
+        logger.debug(f'Create image_table data if it does not exist')
         self.cursor.execute(
             "CREATE TABLE IF NOT EXISTS "
-            "image_data(name, exifdata_checksum, imagedata_checksum, exifdata_encoded, path)"
+            f"image_data({','.join(IMAGE_DATA_ROWS)})"
         )
+
+        logger.debug(f'Create index for "imagedata_checksum" column on the image_data table')
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS imagedata_checksum ON image_data(imagedata_checksum)")
+
+        logger.debug(f'Create index for "exifdata_checksum" column on the image_data table')
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS exifdata_checksum ON image_data(exifdata_checksum)")
+
+        logger.debug(f'Create compound index for the "imagedata_checksum" and "exifdata_checksum" columns on the image_data table')
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS checksums ON image_data(imagedata_checksum, exifdata_checksum)")
 
     def insert(self, image_data):
         """
@@ -138,9 +148,12 @@ class ImageDataDB(object):
         return res.fetchall()
 
     def path_exists(self, path):
-        res = self.cursor.execute(f"""
-            SELECT * FROM image_data WHERE path = '{abspath(path)}'
-        """)
+        try:
+            res = self.cursor.execute(f"""
+                SELECT * FROM image_data WHERE path = '{abspath(path)}'
+            """)
+        except:
+           print(path)
         return (res.fetchone() != None)
 
 
@@ -166,11 +179,15 @@ def index_images(db, path):
         if db.path_exists(f):
             continue
 
-        logger.debug(f'Parsing file "{f}"')
-        image_data = ImageData(f)
+        try:
+            logger.debug(f'Parsing file "{f}"')
+            image_data = ImageData(f)
 
-        logger.debug(f'Inserting file "{f}"')
-        db.insert(image_data)
+            logger.debug(f'Inserting file "{f}"')
+            db.insert(image_data)
+        except Exception as e:
+            loger.error(f'Error occurred while parsing file "{f}"')
+            raise(e)
 
 
 def find_videos(db, path):
@@ -181,18 +198,61 @@ def index_videos(db, path):
     pass
 
 
+def parse_args():
+    parser = ArgumentParser(
+        prog="imgtool",
+        description="Tool to compare images in a directory and find duplicates while ignoring exif data"
+    )
+    parser.add_argument("-D", "--dbpath", type=str, default=env["HOME"]+"/imgtool.sqlite")
+    subparsers = parser.add_subparsers()
+
+    parser_index = subparsers.add_parser("index", help="Index image files ")
+    parser_index.add_argument("path", help="Path to search for images (recursively)")
+    parser_index.add_argument("path", help="Path to search for images (recursively)")
+    parser_index.set_defaults(func=index)
+
+    parser_count = subparsers.add_parser("count", help="Prints the number of rows found in the database")
+    parser_count.set_defaults(func=count)
+
+    parser_dump = subparsers.add_parser("dump", help="Dump all rows in the database")
+    parser_dump.set_defaults(func=dump)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+def index(args):
+    logger.info(f'Initializing database client"')
+    db = ImageDataDB(args.dbpath)
+
+    index_images(db, args.path)
+
+
+def count(args):
+    logger.info(f'Initializing database client"')
+    db = ImageDataDB(args.dbpath)
+
+    print(len(db.select_all()))
+
+
+def dump(args):
+    logger.info(f'Initializing database client"')
+    db = ImageDataDB(args.dbpath)
+
+    # convert row results to JSON
+    records = list(
+        map(lambda r: dict(zip(IMAGE_DATA_ROWS, r)), db.select_all())
+    )
+    print(jsondump(records))
+
 
 def main():
+
     if not EXIFTOOL_CMD:
         raise ExifToolMissing
 
-    logger.info(f'Initializing database client"')
-    db = ImageDataDB(SQLITE_DB_PATH)
+    args = parse_args()
 
-    # TODO: get image path from argparse
-    index_images(db, TEST_IMAGE_PATH)
-
-    #print(len(db.select_all()))
 
 if __name__ == "__main__":
     main()
