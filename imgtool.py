@@ -4,15 +4,18 @@ import logging
 import sqlite3
 
 from argparse import ArgumentParser
-from base64 import b64encode
+from ast import literal_eval
+from base64 import b64encode, b64decode
 from hashlib import md5
+from json import dumps as json_dump
 from os import environ as env
+from os.path import isfile
 from os.path import abspath, basename
 from pathlib import Path
 from rich.progress import track
 from shutil import which
 from subprocess import run
-from json import dumps as jsondump
+from sys import exit
 
 
 class ExifToolMissing(Exception):
@@ -29,6 +32,129 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 IMAGE_DATA_ROWS = ["name", "exifdata_checksum", "imagedata_checksum", "exifdata_encoded", "path"]
+
+
+VALID_SOFTWARE_TAG_VALUES = [
+  "1.0300",
+  "1202061",
+  "4.2.1",
+  "4.3.3",
+  "5.0.1",
+  "5.1",
+  "8.1.2",
+  "910291",
+  "A536BXXS4AVJ1",
+  "A536BXXS4BWA2",
+  "A536BXXS5CWB6",
+  "A536BXXS5CWD3",
+  "A536BXXS7CWG2",
+  "A536BXXS7CWH1",
+  "A536BXXS7CWI1",
+  "A536BXXS8DWL1",
+  "A536BXXS8DWL5",
+  "A536BXXS8DXA1",
+  "A536BXXS8DXC1",
+  "A536BXXS9DXD1",
+  "A536BXXU2AVD7",
+  "A536BXXU2AVF2",
+  "A536BXXU2AVG1",
+  "A536BXXU3AVGA",
+  "A536BXXU4AVH9",
+  "A536BXXU4BVJG",
+  "A536BXXU4BVKB",
+  "A536BXXU4BVL2",
+  "A536BXXU4CWB1",
+  "A536BXXU5CWD1",
+  "A536BXXU6CWE9",
+  "A536BXXU7CWGJ",
+  "A536BXXU7DWK6",
+  "DSLR-A230 v1.00",
+  "I8190XXAMG4",
+  "I8190XXANA2",
+  "I8190XXANI4",
+  "I9300XXBLH1",
+  "I9300XXDLIH",
+  "I9300XXELLA",
+  "I9300XXEMC2",
+  "I9300XXEME2",
+  "I9300XXEMG4",
+  "I9300XXEMH1",
+  "I9300XXUGMK6",
+  "I9300XXUGNA5",
+  "I9300XXUGND5",
+  "RNE-L21 8.0.0.332(C432)",
+  "RNE-L21 8.0.0.334(C432)",
+  "RNE-L21 8.0.0.336(C432)",
+  "RNE-L21 8.0.0.337(C432)",
+  "RNE-L21 8.0.0.338(C432)",
+  "RNE-L21 8.0.0.339(C432)",
+  "RNE-L21 8.0.0.340(C432)",
+  "RNE-L21 8.0.0.341(C432)",
+  "RNE-L21 8.0.0.342(C432)",
+  "RNE-L21 8.0.0.343(C432)",
+  "RNE-L21 8.0.0.344(C432)",
+  "RNE-L21 8.0.0.345(C432)",
+  "RNE-L21 8.0.0.346(C432)",
+  "RNE-L21 8.0.0.354(C432)",
+  "RNE-L21 8.0.0.360(C432)",
+  "RNE-L21C432B100",
+  "RNE-L21C432B120",
+  "RNE-L21C432B130",
+  "RNE-L21C432B133",
+  "RNE-L21C432B134",
+  "RNE-L21C432B135",
+  "RNE-L21C432B137",
+  "SNE-LX1 10.0.0.170(C432E10R1P1)",
+  "SNE-LX1 10.0.0.185(C432E10R1P1)",
+  "SNE-LX1 10.0.0.193(C432E10R1P1)",
+  "SNE-LX1 10.0.0.203(C432E10R1P1)",
+  "SNE-LX1 10.0.0.212(C432E10R1P1)",
+  "SNE-LX1 10.0.0.232(C432E10R1P1)",
+  "SNE-LX1 10.0.0.245(C432E10R1P1)",
+  "SNE-LX1 10.0.0.258(C432E11R1P1)",
+  "SNE-LX1 10.0.0.271(C432E11R1P1)",
+  "SNE-LX1 10.0.0.272(C432E11R1P1)",
+  "SNE-LX1 10.0.0.273(C432E11R1P1)",
+  "SNE-LX1 10.0.0.274(C432E11R1P1)",
+  "SNE-LX1 10.0.0.277(C432E11R1P1)",
+  "SNE-LX1 10.0.0.278(C432E11R1P1)",
+  "SNE-LX1 10.0.0.279(C432E11R1P1)",
+  "SNE-LX1 10.0.0.286(C432E12R1P1)",
+  "SNE-LX1 10.0.0.288(C432E12R1P1)",
+  "SNE-LX1 10.0.0.290(C432E12R1P1)",
+  "SNE-LX1 8.2.0.138(C432)",
+  "SNE-LX1 9.0.1.164(SP53C432E6R1P1)",
+  "SNE-LX1 9.0.1.173(SP53C432E6R1P1)",
+  "SNE-LX1 9.1.0.215(C432E4R1P1)",
+  "SNE-LX1 9.1.0.229(C432E4R1P1)",
+  "SNE-LX1 9.1.0.245(C432E4R1P1)",
+  "SNE-LX1 9.1.0.266(C432E4R1P1)",
+  "SNE-LX1 9.1.0.280(C432E4R1P1)",
+  "SNE-LX1 9.1.0.291(C432E4R1P1)",
+  "V233-00-01",
+  "XXLK6",
+]
+
+INVALID_SOFTWARE_TAG_VALUES = [
+  "Adobe Photoshop CC (Windows)",
+  "Adobe Photoshop CC 2014 (Windows)",
+  "Adobe Photoshop CC 2015 (Macintosh)",
+  "Adobe Photoshop CS3 Macintosh",
+  "Adobe Photoshop CS3 Windows",
+  "Adobe Photoshop CS5 Windows",
+  "Adobe Photoshop CS6 (Macintosh)",
+  "Adobe Photoshop Elements 12.0 Windows",
+  "Adobe Photoshop Express 9.0 (Android)",
+  "Adobe Photoshop Lightroom 5.0 (Windows)",
+  "Adobe Photoshop Lightroom 5.5 (Macintosh)",
+  "Adobe Photoshop Lightroom Classic 7.5 (Macintosh)",
+  "Google",
+  "Microsoft Windows Photo Viewer 6.1.7600.16385",
+  "Picasa",
+  "Shotwell 0.30.7",
+  "Layout from Instagram",
+  "kinzie_reteu-user 6.0 MPKS24.78-8-12 6 release-keys",
+]
 
 
 class ImageData(object):
@@ -149,6 +275,10 @@ class ImageDataDB(object):
         """)
         self.connection.commit()
 
+    def remove_by_path(self, path):
+        res = self.cursor.execute(f"DELETE FROM image_data WHERE path = '{escape_query_string(path)}'")
+        self.connection.commit()
+
     def select_all(self):
         res = self.cursor.execute("SELECT * FROM image_data")
         return res.fetchall()
@@ -162,6 +292,36 @@ class ImageDataDB(object):
     def path_exists(self, path):
         res = self.cursor.execute(f"SELECT * FROM image_data WHERE path = '{escape_query_string(abspath(path))}'")
         return (res.fetchone() is not None)
+
+    def dump(self):
+        return list(
+            map(lambda r: dict(zip(IMAGE_DATA_ROWS, r)), self.select_all())
+        )
+
+
+def get_image_sets(db):
+    """Returns two dictionaries of images sorted by imagedata_checksum (as the key)
+       The first dictionary contains only images with duplicates while the second
+       contains all images
+    """
+    rows = db.dump()
+
+    all_sets = {}
+    for row in rows:
+        all_sets.setdefault(row['imagedata_checksum'], []).append(row)
+
+    duplicate_sets = {k: v for k, v in all_sets.items() if len(v) > 1}
+
+    return duplicate_sets, all_sets
+
+
+def decode_exifdata(encoded_string):
+    return literal_eval(b64decode(encoded_string).decode())
+
+
+# TODO: needs improvement
+def escape_query_string(string):
+    return string.replace("'", "''")
 
 
 def find_images(path):
@@ -207,35 +367,65 @@ def index_videos(db, path):
     pass
 
 
-def index(args):
-    logger.info('Initializing database client"')
-    db = ImageDataDB(args.dbpath)
-
+def index(db, args):
     index_images(db, args.path, args.force_reindex)
 
 
-def count(args):
-    logger.info('Initializing database client"')
-    db = ImageDataDB(args.dbpath)
-
-    print(len(db.select_all()))
+def dump(db, args):
+    print(json_dump(db.dump()))
 
 
-def dump(args):
-    logger.info('Initializing database client"')
-    db = ImageDataDB(args.dbpath)
+def images_by_tag(db, args):
+    """Return list of image paths that have a matchin exiftag value"""
+    matches = []
 
-    # convert row results to JSON
-    records = list(
-        map(lambda r: dict(zip(IMAGE_DATA_ROWS, r)), db.select_all())
-    )
-    print(jsondump(records))
+    _, images = get_image_sets(db)
+    for k, v in images.items():
+        for i in v:
+            exifdata = decode_exifdata(i.get('exifdata_encoded', ''))
+            if exifdata.get(args.tag, '') == args.value:
+                matches.append(i['path'])
+
+    print(json_dump(matches))
 
 
-# TODO: needs improvement
-def escape_query_string(string):
-    return string.replace("'", "''")
+def unique_tag_values(db, args):
+    """Returns a list of unique values for a tag"""
+    _, images = get_image_sets(db)
+    unique_values = set()
+    for k, v in images.items():
+        for i in v:
+            try:
+                exifdata = decode_exifdata(i.get('exifdata_encoded', ''))
+                unique_values.add(exifdata.get(args.tag, ''))
+            except BaseException as e:
+                print(i['path'], e)
 
+    print(json_dump(list(unique_values)))
+
+
+def fix(db, args):
+    """Fix exif data in duplicate sets"""
+    dupes, _ = get_image_sets(db)
+    for d in dupes:
+        pass
+        #
+        # Software Tag
+        #
+
+
+def stats(db, args):
+    """Print statistics on duplicates"""
+    dupes, images = get_image_sets(db)
+    print(f'Found {len(images.items())} sets of images of which {len(dupes.items())} have duplicates')
+
+
+def clean(db, args):
+    """Print statistics on duplicates"""
+    for i in db.dump():
+        if not isfile(i['path']):
+            logger.info(f'Removing missing file at {i["path"]}')
+            db.remove_by_path(i["path"])
 
 def parse_args():
     parser = ArgumentParser(
@@ -243,31 +433,61 @@ def parse_args():
         description="Tool to compare images in a directory and find duplicates while ignoring exif data"
     )
     parser.add_argument("-D", "--dbpath", type=str, default=f"{env["HOME"]}/imgtool.sqlite")
-    subparsers = parser.add_subparsers()
     parser.set_defaults(func=parser.print_usage)
+    subparsers = parser.add_subparsers()
 
-    parser_index = subparsers.add_parser("index", help="Index image files ")
+    parser_index = subparsers.add_parser("index", help="Index image files")
+    parser_index.set_defaults(func=index)
     parser_index.add_argument("path", help="Path to search for images (recursively)")
     parser_index.add_argument(
         "-f", "--force-reindex", action="store_true", help="Force re-indexation of existing files"
     )
-    parser_index.set_defaults(func=index)
-
-    parser_count = subparsers.add_parser("count", help="Prints the number of rows found in the database")
-    parser_count.set_defaults(func=count)
 
     parser_dump = subparsers.add_parser("dump", help="Dump all rows in the database")
     parser_dump.set_defaults(func=dump)
 
+    parser_unique = subparsers.add_parser("unique-tag-values", help="List unique values for a specific tag")
+    parser_unique.add_argument(
+        "-t", "--tag", required=True, help="Exif tag you want to check"
+    )
+    parser_unique.set_defaults(func=unique_tag_values)
+
+    parser_tagvalue = subparsers.add_parser("find-by-tag-value", help="List unique values for a specific tag")
+    parser_tagvalue.add_argument(
+        "-t", "--tag", required=True, help="Exif tag you want to search for"
+    )
+    parser_tagvalue.add_argument(
+        "-v", "--value", required=True, help="Value of the tag you are searching for"
+    )
+    parser_tagvalue.set_defaults(func=images_by_tag)
+
+    parser_fix = subparsers.add_parser("fix", help="Fix exifdata")
+    parser_fix.set_defaults(func=fix)
+
+    parser_stats = subparsers.add_parser("stats", help="Show duplicate stats")
+    parser_stats.set_defaults(func=stats)
+
+    parser_stats = subparsers.add_parser("clean", help="Clean up missing files from database")
+    parser_stats.set_defaults(func=clean)
+
     args = parser.parse_args()
-    parser.print_usage()
+
+    if args.func == parser.print_usage:
+        parser.print_usage()
+        exit(1)
 
     return args
 
 
 def main():
+    logger.debug('Parsing command-line arguments')
     args = parse_args()
-    args.func(args)
+
+    logger.debug('Initializing database client"')
+    db = ImageDataDB(args.dbpath)
+
+    logger.debug('Calling subcommand function')
+    args.func(db, args)
 
 
 if __name__ == "__main__":
