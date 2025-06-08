@@ -276,7 +276,7 @@ class ImageDataDB(object):
         self.connection.commit()
 
     def remove_by_path(self, path):
-        res = self.cursor.execute(f"DELETE FROM image_data WHERE path = '{escape_query_string(path)}'")
+        self.cursor.execute(f"DELETE FROM image_data WHERE path = '{escape_query_string(path)}'")
         self.connection.commit()
 
     def select_all(self):
@@ -407,11 +407,29 @@ def unique_tag_values(db, args):
 def fix(db, args):
     """Fix exif data in duplicate sets"""
     dupes, _ = get_image_sets(db)
-    for d in dupes:
-        pass
-        #
-        # Software Tag
-        #
+    for k, v in dupes.items():
+        tags = {
+            'Software': [],
+        }
+        for i in v:
+            exifdata = decode_exifdata(i.get('exifdata_encoded', ''))
+            tags['Software'].append(exifdata.get('Software', ''))
+
+        if len(tags['Software']) > 1:
+            _unique = list(set(tags['Software']))
+            if len(_unique) > 1:
+                _unique_valid = [i for i in _unique if i not in INVALID_SOFTWARE_TAG_VALUES]
+                if len(_unique_valid) == 1:
+                    if _unique_valid[0] == '':
+                        for i in v:
+                            _cmd = [
+                                EXIFTOOL_CMD,
+                                i['path'], f'-Software={_unique_valid[0]}',
+                                '-overwrite_original',
+                            ]
+
+                            print('unique_values:', _unique, 'cmd:', ' '.join(_cmd))
+                            result = run(_cmd, capture_output=True)
 
 
 def stats(db, args):
@@ -426,6 +444,7 @@ def clean(db, args):
         if not isfile(i['path']):
             logger.info(f'Removing missing file at {i["path"]}')
             db.remove_by_path(i["path"])
+
 
 def parse_args():
     parser = ArgumentParser(
