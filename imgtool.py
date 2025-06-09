@@ -375,6 +375,11 @@ def dump(db, args):
     print(json_dump(db.dump()))
 
 
+def get_duplicate(db, args):
+    duplicates, images = get_image_sets(db)
+    print(json_dump(duplicates[list(duplicates.keys())[0]]))
+
+
 def images_by_tag(db, args):
     """Return list of image paths that have a matchin exiftag value"""
     matches = []
@@ -411,9 +416,24 @@ def fix(db, args):
         tags = {
             'Software': [],
         }
+
         for i in v:
             exifdata = decode_exifdata(i.get('exifdata_encoded', ''))
             tags['Software'].append(exifdata.get('Software', ''))
+            _cmd = [
+                EXIFTOOL_CMD,
+                i['path'],
+                '-XMP:All=',                  # remove all XMP data
+                '-ThumbnailImage=',           # remove thumbnails to fix incorrect thumbnail offset (can be regenerated)
+                '-OriginatingProgram=',        # remove (created by Shotwell in my specific case)
+                '-ProgramVersion=',            # remove (created by Shotwell in my specific case)
+                '-ApplicationRecordVersion=',  # don't need it
+                '-CurrentIPTCDigest=',         # don't need it
+                '-overwrite_original'
+            ]
+
+            print('cmd:', ' '.join(_cmd))
+            run(_cmd, capture_output=True)
 
         if len(tags['Software']) > 1:
             _unique = list(set(tags['Software']))
@@ -429,7 +449,7 @@ def fix(db, args):
                             ]
 
                             print('unique_values:', _unique, 'cmd:', ' '.join(_cmd))
-                            result = run(_cmd, capture_output=True)
+                            run(_cmd, capture_output=True)
 
 
 def stats(db, args):
@@ -485,6 +505,9 @@ def parse_args():
 
     parser_stats = subparsers.add_parser("stats", help="Show duplicate stats")
     parser_stats.set_defaults(func=stats)
+
+    parser_dupe = subparsers.add_parser("dupe", help="Get a single duplicate set")
+    parser_dupe.set_defaults(func=get_duplicate)
 
     parser_stats = subparsers.add_parser("clean", help="Clean up missing files from database")
     parser_stats.set_defaults(func=clean)
