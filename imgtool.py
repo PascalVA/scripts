@@ -31,129 +31,135 @@ if not EXIFTOOL_CMD:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-IMAGE_DATA_ROWS = ["name", "exifdata_checksum", "imagedata_checksum", "exifdata_encoded", "path"]
+IMAGE_DATA_ROWS = [
+    "name",
+    "exifdata_checksum",
+    "imagedata_checksum",
+    "exifdata_encoded",
+    "path",
+]
 
 
 VALID_SOFTWARE_TAG_VALUES = [
-  "1.0300",
-  "1202061",
-  "4.2.1",
-  "4.3.3",
-  "5.0.1",
-  "5.1",
-  "8.1.2",
-  "910291",
-  "A536BXXS4AVJ1",
-  "A536BXXS4BWA2",
-  "A536BXXS5CWB6",
-  "A536BXXS5CWD3",
-  "A536BXXS7CWG2",
-  "A536BXXS7CWH1",
-  "A536BXXS7CWI1",
-  "A536BXXS8DWL1",
-  "A536BXXS8DWL5",
-  "A536BXXS8DXA1",
-  "A536BXXS8DXC1",
-  "A536BXXS9DXD1",
-  "A536BXXU2AVD7",
-  "A536BXXU2AVF2",
-  "A536BXXU2AVG1",
-  "A536BXXU3AVGA",
-  "A536BXXU4AVH9",
-  "A536BXXU4BVJG",
-  "A536BXXU4BVKB",
-  "A536BXXU4BVL2",
-  "A536BXXU4CWB1",
-  "A536BXXU5CWD1",
-  "A536BXXU6CWE9",
-  "A536BXXU7CWGJ",
-  "A536BXXU7DWK6",
-  "DSLR-A230 v1.00",
-  "I8190XXAMG4",
-  "I8190XXANA2",
-  "I8190XXANI4",
-  "I9300XXBLH1",
-  "I9300XXDLIH",
-  "I9300XXELLA",
-  "I9300XXEMC2",
-  "I9300XXEME2",
-  "I9300XXEMG4",
-  "I9300XXEMH1",
-  "I9300XXUGMK6",
-  "I9300XXUGNA5",
-  "I9300XXUGND5",
-  "RNE-L21 8.0.0.332(C432)",
-  "RNE-L21 8.0.0.334(C432)",
-  "RNE-L21 8.0.0.336(C432)",
-  "RNE-L21 8.0.0.337(C432)",
-  "RNE-L21 8.0.0.338(C432)",
-  "RNE-L21 8.0.0.339(C432)",
-  "RNE-L21 8.0.0.340(C432)",
-  "RNE-L21 8.0.0.341(C432)",
-  "RNE-L21 8.0.0.342(C432)",
-  "RNE-L21 8.0.0.343(C432)",
-  "RNE-L21 8.0.0.344(C432)",
-  "RNE-L21 8.0.0.345(C432)",
-  "RNE-L21 8.0.0.346(C432)",
-  "RNE-L21 8.0.0.354(C432)",
-  "RNE-L21 8.0.0.360(C432)",
-  "RNE-L21C432B100",
-  "RNE-L21C432B120",
-  "RNE-L21C432B130",
-  "RNE-L21C432B133",
-  "RNE-L21C432B134",
-  "RNE-L21C432B135",
-  "RNE-L21C432B137",
-  "SNE-LX1 10.0.0.170(C432E10R1P1)",
-  "SNE-LX1 10.0.0.185(C432E10R1P1)",
-  "SNE-LX1 10.0.0.193(C432E10R1P1)",
-  "SNE-LX1 10.0.0.203(C432E10R1P1)",
-  "SNE-LX1 10.0.0.212(C432E10R1P1)",
-  "SNE-LX1 10.0.0.232(C432E10R1P1)",
-  "SNE-LX1 10.0.0.245(C432E10R1P1)",
-  "SNE-LX1 10.0.0.258(C432E11R1P1)",
-  "SNE-LX1 10.0.0.271(C432E11R1P1)",
-  "SNE-LX1 10.0.0.272(C432E11R1P1)",
-  "SNE-LX1 10.0.0.273(C432E11R1P1)",
-  "SNE-LX1 10.0.0.274(C432E11R1P1)",
-  "SNE-LX1 10.0.0.277(C432E11R1P1)",
-  "SNE-LX1 10.0.0.278(C432E11R1P1)",
-  "SNE-LX1 10.0.0.279(C432E11R1P1)",
-  "SNE-LX1 10.0.0.286(C432E12R1P1)",
-  "SNE-LX1 10.0.0.288(C432E12R1P1)",
-  "SNE-LX1 10.0.0.290(C432E12R1P1)",
-  "SNE-LX1 8.2.0.138(C432)",
-  "SNE-LX1 9.0.1.164(SP53C432E6R1P1)",
-  "SNE-LX1 9.0.1.173(SP53C432E6R1P1)",
-  "SNE-LX1 9.1.0.215(C432E4R1P1)",
-  "SNE-LX1 9.1.0.229(C432E4R1P1)",
-  "SNE-LX1 9.1.0.245(C432E4R1P1)",
-  "SNE-LX1 9.1.0.266(C432E4R1P1)",
-  "SNE-LX1 9.1.0.280(C432E4R1P1)",
-  "SNE-LX1 9.1.0.291(C432E4R1P1)",
-  "V233-00-01",
-  "XXLK6",
+    "1.0300",
+    "1202061",
+    "4.2.1",
+    "4.3.3",
+    "5.0.1",
+    "5.1",
+    "8.1.2",
+    "910291",
+    "A536BXXS4AVJ1",
+    "A536BXXS4BWA2",
+    "A536BXXS5CWB6",
+    "A536BXXS5CWD3",
+    "A536BXXS7CWG2",
+    "A536BXXS7CWH1",
+    "A536BXXS7CWI1",
+    "A536BXXS8DWL1",
+    "A536BXXS8DWL5",
+    "A536BXXS8DXA1",
+    "A536BXXS8DXC1",
+    "A536BXXS9DXD1",
+    "A536BXXU2AVD7",
+    "A536BXXU2AVF2",
+    "A536BXXU2AVG1",
+    "A536BXXU3AVGA",
+    "A536BXXU4AVH9",
+    "A536BXXU4BVJG",
+    "A536BXXU4BVKB",
+    "A536BXXU4BVL2",
+    "A536BXXU4CWB1",
+    "A536BXXU5CWD1",
+    "A536BXXU6CWE9",
+    "A536BXXU7CWGJ",
+    "A536BXXU7DWK6",
+    "DSLR-A230 v1.00",
+    "I8190XXAMG4",
+    "I8190XXANA2",
+    "I8190XXANI4",
+    "I9300XXBLH1",
+    "I9300XXDLIH",
+    "I9300XXELLA",
+    "I9300XXEMC2",
+    "I9300XXEME2",
+    "I9300XXEMG4",
+    "I9300XXEMH1",
+    "I9300XXUGMK6",
+    "I9300XXUGNA5",
+    "I9300XXUGND5",
+    "RNE-L21 8.0.0.332(C432)",
+    "RNE-L21 8.0.0.334(C432)",
+    "RNE-L21 8.0.0.336(C432)",
+    "RNE-L21 8.0.0.337(C432)",
+    "RNE-L21 8.0.0.338(C432)",
+    "RNE-L21 8.0.0.339(C432)",
+    "RNE-L21 8.0.0.340(C432)",
+    "RNE-L21 8.0.0.341(C432)",
+    "RNE-L21 8.0.0.342(C432)",
+    "RNE-L21 8.0.0.343(C432)",
+    "RNE-L21 8.0.0.344(C432)",
+    "RNE-L21 8.0.0.345(C432)",
+    "RNE-L21 8.0.0.346(C432)",
+    "RNE-L21 8.0.0.354(C432)",
+    "RNE-L21 8.0.0.360(C432)",
+    "RNE-L21C432B100",
+    "RNE-L21C432B120",
+    "RNE-L21C432B130",
+    "RNE-L21C432B133",
+    "RNE-L21C432B134",
+    "RNE-L21C432B135",
+    "RNE-L21C432B137",
+    "SNE-LX1 10.0.0.170(C432E10R1P1)",
+    "SNE-LX1 10.0.0.185(C432E10R1P1)",
+    "SNE-LX1 10.0.0.193(C432E10R1P1)",
+    "SNE-LX1 10.0.0.203(C432E10R1P1)",
+    "SNE-LX1 10.0.0.212(C432E10R1P1)",
+    "SNE-LX1 10.0.0.232(C432E10R1P1)",
+    "SNE-LX1 10.0.0.245(C432E10R1P1)",
+    "SNE-LX1 10.0.0.258(C432E11R1P1)",
+    "SNE-LX1 10.0.0.271(C432E11R1P1)",
+    "SNE-LX1 10.0.0.272(C432E11R1P1)",
+    "SNE-LX1 10.0.0.273(C432E11R1P1)",
+    "SNE-LX1 10.0.0.274(C432E11R1P1)",
+    "SNE-LX1 10.0.0.277(C432E11R1P1)",
+    "SNE-LX1 10.0.0.278(C432E11R1P1)",
+    "SNE-LX1 10.0.0.279(C432E11R1P1)",
+    "SNE-LX1 10.0.0.286(C432E12R1P1)",
+    "SNE-LX1 10.0.0.288(C432E12R1P1)",
+    "SNE-LX1 10.0.0.290(C432E12R1P1)",
+    "SNE-LX1 8.2.0.138(C432)",
+    "SNE-LX1 9.0.1.164(SP53C432E6R1P1)",
+    "SNE-LX1 9.0.1.173(SP53C432E6R1P1)",
+    "SNE-LX1 9.1.0.215(C432E4R1P1)",
+    "SNE-LX1 9.1.0.229(C432E4R1P1)",
+    "SNE-LX1 9.1.0.245(C432E4R1P1)",
+    "SNE-LX1 9.1.0.266(C432E4R1P1)",
+    "SNE-LX1 9.1.0.280(C432E4R1P1)",
+    "SNE-LX1 9.1.0.291(C432E4R1P1)",
+    "V233-00-01",
+    "XXLK6",
 ]
 
 INVALID_SOFTWARE_TAG_VALUES = [
-  "Adobe Photoshop CC (Windows)",
-  "Adobe Photoshop CC 2014 (Windows)",
-  "Adobe Photoshop CC 2015 (Macintosh)",
-  "Adobe Photoshop CS3 Macintosh",
-  "Adobe Photoshop CS3 Windows",
-  "Adobe Photoshop CS5 Windows",
-  "Adobe Photoshop CS6 (Macintosh)",
-  "Adobe Photoshop Elements 12.0 Windows",
-  "Adobe Photoshop Express 9.0 (Android)",
-  "Adobe Photoshop Lightroom 5.0 (Windows)",
-  "Adobe Photoshop Lightroom 5.5 (Macintosh)",
-  "Adobe Photoshop Lightroom Classic 7.5 (Macintosh)",
-  "Google",
-  "Microsoft Windows Photo Viewer 6.1.7600.16385",
-  "Picasa",
-  "Shotwell 0.30.7",
-  "Layout from Instagram",
-  "kinzie_reteu-user 6.0 MPKS24.78-8-12 6 release-keys",
+    "Adobe Photoshop CC (Windows)",
+    "Adobe Photoshop CC 2014 (Windows)",
+    "Adobe Photoshop CC 2015 (Macintosh)",
+    "Adobe Photoshop CS3 Macintosh",
+    "Adobe Photoshop CS3 Windows",
+    "Adobe Photoshop CS5 Windows",
+    "Adobe Photoshop CS6 (Macintosh)",
+    "Adobe Photoshop Elements 12.0 Windows",
+    "Adobe Photoshop Express 9.0 (Android)",
+    "Adobe Photoshop Lightroom 5.0 (Windows)",
+    "Adobe Photoshop Lightroom 5.5 (Macintosh)",
+    "Adobe Photoshop Lightroom Classic 7.5 (Macintosh)",
+    "Google",
+    "Microsoft Windows Photo Viewer 6.1.7600.16385",
+    "Picasa",
+    "Shotwell 0.30.7",
+    "Layout from Instagram",
+    "kinzie_reteu-user 6.0 MPKS24.78-8-12 6 release-keys",
 ]
 
 
@@ -180,13 +186,20 @@ class ImageData(object):
         _cmd = [
             EXIFTOOL_CMD,
             self.path,
-            "-x", "Directory",
-            "-x", "FileName",
-            "-x", "FilePermissions",
-            "-x", "FileAccessDate",
-            "-x", "FileModifyDate",
-            "-x", "FileInodeChangeDate",
-            "-x", "ExifToolVersion",
+            "-x",
+            "Directory",
+            "-x",
+            "FileName",
+            "-x",
+            "FilePermissions",
+            "-x",
+            "FileAccessDate",
+            "-x",
+            "FileModifyDate",
+            "-x",
+            "FileInodeChangeDate",
+            "-x",
+            "ExifToolVersion",
         ]
 
         result = run(_cmd, capture_output=True)
@@ -198,7 +211,7 @@ class ImageData(object):
                 continue
             separator_index = line.index(":")
             k = line[:separator_index].rstrip(" ")
-            v = line[separator_index+2:].lstrip(" ")
+            v = line[separator_index + 2 :].lstrip(" ")
             _exifdata.update({k: v})
 
         self.exifdata = dict(sorted(_exifdata.items()))
@@ -212,7 +225,8 @@ class ImageData(object):
             EXIFTOOL_CMD,
             self.path,
             "-all=",
-            "-o", "-",
+            "-o",
+            "-",
             "-b",
         ]
 
@@ -225,6 +239,7 @@ class ImageDataDB(object):
     """
     Implements database operations for image data
     """
+
     def __init__(self, sqlite_db_path):
         self.db = abspath(sqlite_db_path)
         self.connection = sqlite3.connect(self.db)
@@ -232,10 +247,9 @@ class ImageDataDB(object):
         self.initialize_database()
 
     def initialize_database(self):
-        logger.debug('Create image_table data if it does not exist')
+        logger.debug("Create image_table data if it does not exist")
         self.cursor.execute(
-            "CREATE TABLE IF NOT EXISTS "
-            f"image_data({','.join(IMAGE_DATA_ROWS)})"
+            f"CREATE TABLE IF NOT EXISTS image_data({','.join(IMAGE_DATA_ROWS)})"
         )
 
         logger.debug(
@@ -253,7 +267,7 @@ class ImageDataDB(object):
         )
 
         logger.debug(
-           'Create compound index for the "imagedata_checksum" and "exifdata_checksum" columns on the image_data table'
+            'Create compound index for the "imagedata_checksum" and "exifdata_checksum" columns on the image_data table'
         )
         self.cursor.execute(
             "CREATE INDEX IF NOT EXISTS checksums ON image_data(imagedata_checksum, exifdata_checksum)"
@@ -276,7 +290,9 @@ class ImageDataDB(object):
         self.connection.commit()
 
     def remove_by_path(self, path):
-        self.cursor.execute(f"DELETE FROM image_data WHERE path = '{escape_query_string(path)}'")
+        self.cursor.execute(
+            f"DELETE FROM image_data WHERE path = '{escape_query_string(path)}'"
+        )
         self.connection.commit()
 
     def select_all(self):
@@ -290,25 +306,25 @@ class ImageDataDB(object):
         return res.fetchall()
 
     def path_exists(self, path):
-        res = self.cursor.execute(f"SELECT * FROM image_data WHERE path = '{escape_query_string(abspath(path))}'")
-        return (res.fetchone() is not None)
+        res = self.cursor.execute(
+            f"SELECT * FROM image_data WHERE path = '{escape_query_string(abspath(path))}'"
+        )
+        return res.fetchone() is not None
 
     def dump(self):
-        return list(
-            map(lambda r: dict(zip(IMAGE_DATA_ROWS, r)), self.select_all())
-        )
+        return list(map(lambda r: dict(zip(IMAGE_DATA_ROWS, r)), self.select_all()))
 
 
 def get_image_sets(db):
     """Returns two dictionaries of images sorted by imagedata_checksum (as the key)
-       The first dictionary contains only images with duplicates while the second
-       contains all images
+    The first dictionary contains only images with duplicates while the second
+    contains all images
     """
     rows = db.dump()
 
     all_sets = {}
     for row in rows:
-        all_sets.setdefault(row['imagedata_checksum'], []).append(row)
+        all_sets.setdefault(row["imagedata_checksum"], []).append(row)
 
     duplicate_sets = {k: v for k, v in all_sets.items() if len(v) > 1}
 
@@ -329,9 +345,10 @@ def find_images(path):
     Recursively find jpg and jpeg images on the specified path
     """
     # the question mark matches a single chacter, the p is not optional
-    jpgs = list(Path(abspath(path)).rglob('**/*.jpg'))
-    jpegs = list(Path(abspath(path)).rglob('**/*.jpeg'))
-    return sorted(jpgs + jpegs)
+    jpgs = list(Path(abspath(path)).rglob("**/*.jpg"))
+    jpegs = list(Path(abspath(path)).rglob("**/*.jpeg"))
+    heics = list(Path(abspath(path)).rglob("**/*.heic"))
+    return sorted(jpgs + jpegs + heics)
 
 
 def index_images(db, path, force_reindex):
@@ -339,9 +356,10 @@ def index_images(db, path, force_reindex):
     When called all files at path will be indexed into the database
     """
     logger.info(f'Searching for files in "{path}"')
-    files = find_images(path)
+    # files = find_images(path)
+    files = find_videos(path)
 
-    logger.info(f'Staring file index on {len(files)} files')
+    logger.info(f"Staring file index on {len(files)} files")
     for f in track(files, description="Indexing files..."):
         # skip files we have already indexed
         if db.path_exists(f) and not force_reindex:
@@ -359,8 +377,14 @@ def index_images(db, path, force_reindex):
             raise e
 
 
-def find_videos(db, path):
-    pass
+def find_videos(path):
+    """
+    Recursively find jpg and jpeg images on the specified path
+    """
+    # the question mark matches a single chacter, the p is not optional
+    mp4s = list(Path(abspath(path)).rglob("**/*.mp4"))
+    MP4s = list(Path(abspath(path)).rglob("**/*.MP4"))
+    return sorted(mp4s + MP4s)
 
 
 def index_videos(db, path):
@@ -385,11 +409,11 @@ def images_by_tag(db, args):
     matches = []
 
     _, images = get_image_sets(db)
-    for k, v in images.items():
+    for _, v in images.items():
         for i in v:
-            exifdata = decode_exifdata(i.get('exifdata_encoded', ''))
-            if exifdata.get(args.tag, '') == args.value:
-                matches.append(i['path'])
+            exifdata = decode_exifdata(i.get("exifdata_encoded", ""))
+            if exifdata.get(args.tag, "") == args.value:
+                matches.append(i["path"])
 
     print(json_dump(matches))
 
@@ -398,80 +422,150 @@ def unique_tag_values(db, args):
     """Returns a list of unique values for a tag"""
     _, images = get_image_sets(db)
     unique_values = set()
-    for k, v in images.items():
+    for _, v in images.items():
         for i in v:
             try:
-                exifdata = decode_exifdata(i.get('exifdata_encoded', ''))
-                unique_values.add(exifdata.get(args.tag, ''))
+                exifdata = decode_exifdata(i.get("exifdata_encoded", ""))
+                unique_values.add(exifdata.get(args.tag, ""))
             except BaseException as e:
-                print(i['path'], e)
+                print(i["path"], e)
 
     print(json_dump(list(unique_values)))
 
 
 def fix(db, args):
+    dupes, images = get_image_sets(db)
+    for _, duplicate_set in dupes.items():
+        if duplicate_set[0]["path"].lower().endswith("mp4"):
+            fix_videos(duplicate_set)
+        if duplicate_set[0]["path"].lower().endswith("avi"):
+            fix_videos(duplicate_set)
+        if duplicate_set[0]["path"].lower().endswith("mov"):
+            fix_videos(duplicate_set)
+        else:
+            fix_images(duplicate_set)
+
+
+def fix_videos(duplicate_set):
+    EncodingTime = None
+    MediaClassPrimaryID = None
+    MediaClassSecondaryID = None
+
+    for image in duplicate_set:
+        exifdata = decode_exifdata(image.get("exifdata_encoded", ""))
+
+        _EncodingTime = exifdata.get("Encoding Time", None)
+        if _EncodingTime:
+            EncodingTime = _EncodingTime
+
+        _MediaClassPrimaryID = exifdata.get("Media Class Primary ID", None)
+        if _MediaClassPrimaryID:
+            MediaClassPrimaryID = _MediaClassPrimaryID
+
+        _MediaClassSecondaryID = exifdata.get("Media Class Secondary ID", None)
+        if _MediaClassSecondaryID:
+            MediaClassSecondaryID = _MediaClassSecondaryID
+
+        # We temporaryily write to Image Description before removing it
+        # To force update the Media Data Offset field
+        _cmd = [
+            EXIFTOOL_CMD,
+            image["path"],
+            "-ImageDescription=temp",
+            "-overwrite_original",
+        ]
+        print("cmd:", " ".join(_cmd))
+        run(_cmd, capture_output=True)
+
+        _cmd = [
+            EXIFTOOL_CMD,
+            image["path"],
+            "-XMP:All=",  # remove all XMP data
+            "-ImageDescription=",
+            "-overwrite_original",
+        ]
+        print("cmd:", " ".join(_cmd))
+        run(_cmd, capture_output=True)
+
+    for image in duplicate_set:
+        _cmd = [
+            EXIFTOOL_CMD,
+            image["path"],
+            f"-EncodingTime={EncodingTime}",
+            f"-MediaClassPrimaryID={MediaClassPrimaryID}",
+            f"-MediaClassSecondaryID={MediaClassSecondaryID}",
+            "-overwrite_original",
+        ]
+        print("cmd:", " ".join(_cmd))
+        run(_cmd, capture_output=True)
+
+
+def fix_images(duplicate_set):
     """Fix exif data in duplicate sets"""
-    dupes, _ = get_image_sets(db)
-    for k, v in dupes.items():
-        tags = {
-            'Software': [],
-        }
+    tags = {
+        "Software": [],
+    }
 
-        for i in v:
-            exifdata = decode_exifdata(i.get('exifdata_encoded', ''))
-            tags['Software'].append(exifdata.get('Software', ''))
-            _cmd = [
-                EXIFTOOL_CMD,
-                i['path'],
-                '-XMP:All=',                  # remove all XMP data
-                '-ThumbnailImage=',           # remove thumbnails to fix incorrect thumbnail offset (can be regenerated)
-                '-OriginatingProgram=',        # remove (created by Shotwell in my specific case)
-                '-ProgramVersion=',            # remove (created by Shotwell in my specific case)
-                '-ApplicationRecordVersion=',  # don't need it
-                '-CurrentIPTCDigest=',         # don't need it
-                '-overwrite_original'
-            ]
+    for image in duplicate_set:
+        exifdata = decode_exifdata(i.get("exifdata_encoded", ""))
+        tags["Software"].append(exifdata.get("Software", ""))
+        _cmd = [
+            EXIFTOOL_CMD,
+            image["path"],
+            "-XMP:All=",  # remove all XMP data
+            "-ThumbnailImage=",  # remove thumbnails to fix incorrect thumbnail offset (can be regenerated)
+            "-OriginatingProgram=",  # remove (created by Shotwell in my specific case)
+            "-ProgramVersion=",  # remove (created by Shotwell in my specific case)
+            "-ApplicationRecordVersion=",  # don't need it
+            "-CurrentIPTCDigest=",  # don't need it
+            "-overwrite_original",
+        ]
 
-            print('cmd:', ' '.join(_cmd))
-            run(_cmd, capture_output=True)
+        print("cmd:", " ".join(_cmd))
+        run(_cmd, capture_output=True)
 
-        if len(tags['Software']) > 1:
-            _unique = list(set(tags['Software']))
-            if len(_unique) > 1:
-                _unique_valid = [i for i in _unique if i not in INVALID_SOFTWARE_TAG_VALUES]
-                if len(_unique_valid) == 1:
-                    if _unique_valid[0] == '':
-                        for i in v:
-                            _cmd = [
-                                EXIFTOOL_CMD,
-                                i['path'], f'-Software={_unique_valid[0]}',
-                                '-overwrite_original',
-                            ]
+    if len(tags["Software"]) > 1:
+        _unique = list(set(tags["Software"]))
+        if len(_unique) > 1:
+            _unique_valid = [i for i in _unique if i not in INVALID_SOFTWARE_TAG_VALUES]
+            if len(_unique_valid) == 1:
+                if _unique_valid[0] == "":
+                    for i in duplicate_set:
+                        _cmd = [
+                            EXIFTOOL_CMD,
+                            i["path"],
+                            f"-Software={_unique_valid[0]}",
+                            "-overwrite_original",
+                        ]
 
-                            print('unique_values:', _unique, 'cmd:', ' '.join(_cmd))
-                            run(_cmd, capture_output=True)
+                        print("unique_values:", _unique, "cmd:", " ".join(_cmd))
+                        run(_cmd, capture_output=True)
 
 
 def stats(db, args):
     """Print statistics on duplicates"""
     dupes, images = get_image_sets(db)
-    print(f'Found {len(images.items())} sets of images of which {len(dupes.items())} have duplicates')
+    print(
+        f"Found {len(images.items())} sets of images of which {len(dupes.items())} have duplicates"
+    )
 
 
 def clean(db, args):
     """Print statistics on duplicates"""
     for i in db.dump():
-        if not isfile(i['path']):
-            logger.info(f'Removing missing file at {i["path"]}')
+        if not isfile(i["path"]):
+            logger.info(f"Removing missing file at {i['path']}")
             db.remove_by_path(i["path"])
 
 
 def parse_args():
     parser = ArgumentParser(
         prog="imgtool",
-        description="Tool to compare images in a directory and find duplicates while ignoring exif data"
+        description="Tool to compare images in a directory and find duplicates while ignoring exif data",
     )
-    parser.add_argument("-D", "--dbpath", type=str, default=f"{env["HOME"]}/imgtool.sqlite")
+    parser.add_argument(
+        "-D", "--dbpath", type=str, default=f"{env['HOME']}/imgtool.sqlite"
+    )
     parser.set_defaults(func=parser.print_usage)
     subparsers = parser.add_subparsers()
 
@@ -479,19 +573,26 @@ def parse_args():
     parser_index.set_defaults(func=index)
     parser_index.add_argument("path", help="Path to search for images (recursively)")
     parser_index.add_argument(
-        "-f", "--force-reindex", action="store_true", help="Force re-indexation of existing files"
+        "-f",
+        "--force-reindex",
+        action="store_true",
+        help="Force re-indexation of existing files",
     )
 
     parser_dump = subparsers.add_parser("dump", help="Dump all rows in the database")
     parser_dump.set_defaults(func=dump)
 
-    parser_unique = subparsers.add_parser("unique-tag-values", help="List unique values for a specific tag")
+    parser_unique = subparsers.add_parser(
+        "unique-tag-values", help="List unique values for a specific tag"
+    )
     parser_unique.add_argument(
         "-t", "--tag", required=True, help="Exif tag you want to check"
     )
     parser_unique.set_defaults(func=unique_tag_values)
 
-    parser_tagvalue = subparsers.add_parser("find-by-tag-value", help="List unique values for a specific tag")
+    parser_tagvalue = subparsers.add_parser(
+        "find-by-tag-value", help="List unique values for a specific tag"
+    )
     parser_tagvalue.add_argument(
         "-t", "--tag", required=True, help="Exif tag you want to search for"
     )
@@ -509,7 +610,9 @@ def parse_args():
     parser_dupe = subparsers.add_parser("dupe", help="Get a single duplicate set")
     parser_dupe.set_defaults(func=get_duplicate)
 
-    parser_stats = subparsers.add_parser("clean", help="Clean up missing files from database")
+    parser_stats = subparsers.add_parser(
+        "clean", help="Clean up missing files from database"
+    )
     parser_stats.set_defaults(func=clean)
 
     args = parser.parse_args()
@@ -522,13 +625,13 @@ def parse_args():
 
 
 def main():
-    logger.debug('Parsing command-line arguments')
+    logger.debug("Parsing command-line arguments")
     args = parse_args()
 
     logger.debug('Initializing database client"')
     db = ImageDataDB(args.dbpath)
 
-    logger.debug('Calling subcommand function')
+    logger.debug("Calling subcommand function")
     args.func(db, args)
 
 
