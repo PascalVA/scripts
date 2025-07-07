@@ -351,13 +351,12 @@ def find_images(path):
     return sorted(jpgs + jpegs + heics)
 
 
-def index_images(db, path, force_reindex):
+def index_media(db, path, force_reindex):
     """
     When called all files at path will be indexed into the database
     """
     logger.info(f'Searching for files in "{path}"')
-    # files = find_images(path)
-    files = find_videos(path)
+    files = find_images(path) += find_videos(path)
 
     logger.info(f"Staring file index on {len(files)} files")
     for f in track(files, description="Indexing files..."):
@@ -392,7 +391,7 @@ def index_videos(db, path):
 
 
 def index(db, args):
-    index_images(db, args.path, args.force_reindex)
+    index_media(db, args.path, args.force_reindex)
 
 
 def dump(db, args):
