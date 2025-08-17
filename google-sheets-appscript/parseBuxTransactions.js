@@ -1,5 +1,5 @@
 // TODO: Return current asset value from ticker in script
-//       that is now handled in the sheet using this function
+//       which is now handled using the built-in GOOGLEFINANCE function
 
 // A mapping of which ticker should be used to
 // get the price of an asset
@@ -25,7 +25,7 @@ function parseBuxTransactions(input_range) {
 
     /*
        This object holds a chronological list of purchases
-       Each entry contains the amount and the TOTAL price
+       Each entry contains the amount and the total price
 
        For example:
          {
@@ -58,11 +58,16 @@ function parseBuxTransactions(input_range) {
       if (transaction_type == "Sell Trade" && transfer_type == "CASH_CREDIT") {
         while (quantity > 0) {
           if (quantity < asset_buckets[asset_name][0]["qt"]) {
-            // if the quantity of the transaction is less than
+            // If the quantity of the transaction is less than
             // what is in the current bucket, we can simple substract
             // the quantity and continue with the next transaction
+            unit_price = asset_buckets[asset_name][0]["price"] / asset_buckets[asset_name][0]["qt"]
+            new_quantity = asset_buckets[asset_name][0]["qt"] - quantity
+            new_price = new_quantity * unit_price
+
+            asset_buckets[asset_name][0]["qt"] = new_quantity
+            asset_buckets[asset_name][0]["price"] = new_price
             quantity = 0
-            asset_buckets[asset_name][0]["qt"] -= quantity
           } else if (quantity == asset_buckets[asset_name][0]["qt"]) {
             // If the quantity is equal to what is in the current bucket
             // We can finish the transaction and remove the bucket
@@ -97,6 +102,7 @@ function parseBuxTransactions(input_range) {
 
   assets = {};
   for (row of input_range) {
+    transaction_type = row[2]
     transfer_type = row[3]
     asset_name = row[8]
     quantity = row[9]
@@ -105,10 +111,10 @@ function parseBuxTransactions(input_range) {
       assets[asset_name] = 0
     }
 
-    if (transfer_type == "ASSET_TRADE_BUY") {
+    if (transaction_type == "Buy Trade" && transfer_type == "CASH_DEBIT") {
       assets[asset_name] += quantity
     }
-    if (transfer_type == "ASSET_TRADE_SELL") {
+    if (transaction_type == "Sell Trade" && transfer_type == "CASH_CREDIT") {
       assets[asset_name] -= quantity
     }
   }
