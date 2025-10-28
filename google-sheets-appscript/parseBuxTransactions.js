@@ -1,5 +1,4 @@
 // TODO: Return current asset value from ticker in script
-//       which is now handled using the built-in GOOGLEFINANCE function
 
 // A mapping of which ticker should be used to
 // get the price of an asset
@@ -61,12 +60,12 @@ function parseBuxTransactions(input_range) {
             // If the quantity of the transaction is less than
             // what is in the current bucket, we can simple substract
             // the quantity and continue with the next transaction
-            unit_price = asset_buckets[asset_name][0]["price"] / asset_buckets[asset_name][0]["qt"]
+            unit_price = asset_buckets[asset_name][0]["value"] / asset_buckets[asset_name][0]["qt"]
             new_quantity = asset_buckets[asset_name][0]["qt"] - quantity
-            new_price = new_quantity * unit_price
+            new_value = new_quantity * unit_price
 
             asset_buckets[asset_name][0]["qt"] = new_quantity
-            asset_buckets[asset_name][0]["price"] = new_price
+            asset_buckets[asset_name][0]["value"] = new_value
             quantity = 0
           } else if (quantity == asset_buckets[asset_name][0]["qt"]) {
             // If the quantity is equal to what is in the current bucket
